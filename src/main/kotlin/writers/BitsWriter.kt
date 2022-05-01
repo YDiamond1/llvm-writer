@@ -1,0 +1,4 @@
+package writers
+
+class BitsWriter {
+}

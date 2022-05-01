@@ -1,0 +1,4 @@
+package bitcode
+
+class Block {
+}
