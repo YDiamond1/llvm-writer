@@ -1,0 +1,7 @@
+class PrimitivesTest {
+
+
+    fun testArray(){
+
+    }
+}

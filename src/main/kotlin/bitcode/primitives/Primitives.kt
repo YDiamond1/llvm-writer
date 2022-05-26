@@ -1,42 +1,62 @@
 package bitcode.primitives
 
-enum class AbbrevMemberIds(val id: Int) {
-    Literal(0),
-    Fixed(1),
-    VBR(2),
-    Array(3),
-    Char6(4),
-    Blob(5)
+import bitcode.abbrevs.StandardWidth
+import bitcode.bits.Bits
+
+
+enum class AbbrevMemberIds(val id: Int, val encoding: Bits?) {
+    Literal(0, null),
+    Fixed(1, Bits(mutableListOf(1), 3)),
+    VBR(2, Bits(mutableListOf(2), 3)),
+    Array(3, Bits(mutableListOf(3), 3)),
+    Char6(4, Bits(mutableListOf(4), 3)),
+    Blob(5, Bits(mutableListOf(5), 3))
 }
 
 
-interface AbbrevMember {
+interface Primitive {
+    fun getExtra() : VBR?
     fun getKind(): AbbrevMemberIds
+    val value: Bits
 }
 
 
-class Literal() : AbbrevMember {
+class Literal() : Primitive {
+    override fun getExtra(): VBR? = null
+
     override fun getKind() = AbbrevMemberIds.Literal
+    override val value: Bits
+        get() = TODO("Not yet implemented")
 }
 
-class Fixed() : AbbrevMember {
+class Fixed(override val value: Bits) : Primitive {
+    override fun getExtra(): VBR = VBR(value.length.toBits(), StandardWidth.AbbrevSizeWidth.width)
+
     override fun getKind(): AbbrevMemberIds = AbbrevMemberIds.Fixed
 }
 
-class VBR(val value: Long, val size: Int) : AbbrevMember {
+class VBR(override val value: Bits, val size: Int) : Primitive {
+    override fun getExtra(): VBR = VBR(size.toBits(), StandardWidth.AbbrevSizeWidth.width)
+
     override fun getKind(): AbbrevMemberIds = AbbrevMemberIds.VBR
 }
 
-class Array() : AbbrevMember {
-    override fun getKind(): AbbrevMemberIds = AbbrevMemberIds.Array
-}
+class Char6(override val value: Bits) : Primitive {
+    override fun getExtra(): VBR? = null
 
-class Char() : AbbrevMember {
     override fun getKind(): AbbrevMemberIds = AbbrevMemberIds.Char6
 }
 
-class Blob() : AbbrevMember {
-    override fun getKind(): AbbrevMemberIds = AbbrevMemberIds.Blob
+
+
+class Array(val list: MutableList<Primitive>) {
+    fun getAbbrevType() = list[0].getKind()
+    fun getAbbrevTypeExtra() = list[0].getExtra()
 }
+
+class Blob(val list: MutableList<Byte>) {
+    fun getKind(): AbbrevMemberIds = AbbrevMemberIds.Blob
+}
+
 
 
